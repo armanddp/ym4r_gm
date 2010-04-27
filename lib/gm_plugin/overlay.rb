@@ -16,11 +16,7 @@ module Ym4r
         end
         @info_window = options.delete(:info_window)
         @info_window_tabs = options.delete(:info_window_tabs)
-        if options.has_key?(:max_url)
-          @info_window_options = {:max_url => options.delete(:max_url) } 
-        else
-          @info_window_options = {}
-        end
+        @info_window_options = options.delete(:info_window_options) || {}
         @options = options
       end
       #Creates a marker: If an info_window or info_window_tabs is present, the response to the click action from the user is setup here.
