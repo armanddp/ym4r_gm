@@ -14,11 +14,25 @@ module Ym4r
         "new GLargeMapControl()"
       end
     end
+    #Large Map 3D control. Report to the Google Maps API documentation for details.
+    class GLargeMapControl3D
+      include MappingObject
+      def create
+        "new GLargeMapControl3D()"
+      end
+    end
     #Small Zoom control. Report to the Google Maps API documentation for details.
     class GSmallZoomControl
       include MappingObject
       def create
         "new GSmallZoomControl()"
+      end
+    end
+    #Small Zoom 3D control. Report to the Google Maps API documentation for details.
+    class GSmallZoomControl3D
+      include MappingObject
+      def create
+        "new GSmallZoomControl3D()"
       end
     end
     #Scale control. Report to the Google Maps API documentation for details.
@@ -40,6 +54,20 @@ module Ym4r
       include MappingObject
       def create
         "new GHierarchicalMapTypeControl()"
+      end
+    end    
+     #Map type control. Report to the Google Maps API documentation for details.
+    class GMenuMapTypeControl
+      include MappingObject
+      def create
+        "new GMenuMapTypeControl()"
+      end
+    end    
+     #Nav label control. Report to the Google Maps API documentation for details.
+    class GNavLabelControl
+      include MappingObject
+      def create
+        "new GNavLabelControl()"
       end
     end    
     #Overview map control. Report to the Google Maps API documentation for details.
@@ -82,7 +110,7 @@ module Ym4r
                     else
                       "G_ANCHOR_BOTTOM_LEFT"
                     end
-        "new google.maps.LocalSearch(options), new GControlPosition(#{js_anchor}, new GSize(#{ow},#{oh}))"
+        "new google.maps.LocalSearch(#{options}), new GControlPosition(#{js_anchor}, new GSize(#{ow},#{oh}))"
       end
     end
 

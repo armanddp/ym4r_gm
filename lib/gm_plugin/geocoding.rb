@@ -114,5 +114,12 @@ module Ym4r
         end
       end
     end
+
+    class GClientGeocoder
+      include MappingObject
+      def create
+        "new GClientGeocoder()"
+      end
+    end
   end
 end

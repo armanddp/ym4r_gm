@@ -75,14 +75,18 @@ module Ym4r
         @init << code
       end
 
-      #Initializes the controls: you can pass a hash with keys <tt>:small_map</tt>, <tt>:large_map</tt>, <tt>:small_zoom</tt>, <tt>:scale</tt>, <tt>:map_type</tt>, <tt>:overview_map</tt> and hash of options controlling its display (<tt>:hide</tt> and <tt>:size</tt>), <tt>:local_search</tt>, <tt>:local_search_options</tt>, and <tt>:show_on_focus</tt>
+      #Initializes the controls: you can pass a hash with keys <tt>:small_map</tt>, <tt>:large_map</tt>, <tt>:large_map_3d</tt>, <tt>:small_zoom</tt>, <tt>:small_zoom_3d</tt>, <tt>:scale</tt>, <tt>:map_type</tt>, <tt>:menu_map_type</tt>, <tt>:hierarchical_map_type</tt>, <tt>:nav_label</tt>, <tt>:overview_map</tt> and hash of options controlling its display (<tt>:hide</tt> and <tt>:size</tt>), <tt>:local_search</tt>, <tt>:local_search_options</tt>, and <tt>:show_on_focus</tt>
       def control_init(controls = {})
         @init_end << add_control(GSmallMapControl.new) if controls[:small_map]
         @init_end << add_control(GLargeMapControl.new) if controls[:large_map]
+        @init_end << add_control(GLargeMapControl3D.new) if controls[:large_map_3d]
         @init_end << add_control(GSmallZoomControl.new) if controls[:small_zoom]
+        @init_end << add_control(GSmallZoomControl3D.new) if controls[:small_zoom_3d]
         @init_end << add_control(GScaleControl.new) if controls[:scale]
         @init_end << add_control(GMapTypeControl.new) if controls[:map_type]
         @init_end << add_control(GHierarchicalMapTypeControl.new) if controls[:hierarchical_map_type]        
+        @init_end << add_control(GMenuMapTypeControl.new) if controls[:menu_map_type]        
+        @init_end << add_control(GNavLabelControl.new) if controls[:nav_label]        
         if controls[:overview_map]
           if controls[:overview_map].is_a?(Hash)
             hide = controls[:overview_map][:hide]
