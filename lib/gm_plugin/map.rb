@@ -25,7 +25,15 @@ module Ym4r
         GMap.header(:with_vml => with_vml)
       end
 
-      #Outputs the header necessary to use the Google Maps API, by including the JS files of the API, as well as a file containing YM4R/GM helper functions. By default, it also outputs a style declaration for VML elements. This default can be overriddent by passing <tt>:with_vml => false</tt> as option to the method. You can also pass a <tt>:host</tt> option in order to select the correct API key for the location where your app is currently running, in case the current environment has multiple possible keys. Usually, in this case, you should pass it <tt>@request.host</tt>. If you have defined only one API key for the current environment, the <tt>:host</tt> option is ignored. Finally you can override all the key settings in the configuration by passing a value to the <tt>:key</tt> key. You can pass a language for the map type buttons with the <tt>:hl</tt> option (possible values are: Japanese (ja), French (fr), German (de), Italian (it), Spanish (es), Catalan (ca), Basque (eu) and Galician (gl): no values means english). Finally, you can pass <tt>:local_search => true</tt> to get the header css and js information needed for the local search control. If you do want local search you must also add <tt>:local_search => true</tt> to the @map.control_init method.
+      def self.load_js_dynamically(script)
+        code = "var script = document.createElement('script');\n"
+        code << "script.src = \"#{script}\";\n"
+        code << "script.type = 'text/javascript';\n"
+        code << "document.getElementsByTagName('head')[0].appendChild(script);\n"
+        code
+      end
+
+      #Outputs the header necessary to use the Google Maps API, by including the JS files of the API, as well as a file containing YM4R/GM helper functions. By default, it also outputs a style declaration for VML elements. This default can be overriddent by passing <tt>:with_vml => false</tt> as option to the method. You can also pass a <tt>:host</tt> option in order to select the correct API key for the location where your app is currently running, in case the current environment has multiple possible keys. Usually, in this case, you should pass it <tt>@request.host</tt>. If you have defined only one API key for the current environment, the <tt>:host</tt> option is ignored. Finally you can override all the key settings in the configuration by passing a value to the <tt>:key</tt> key. You can pass a language for the map type buttons with the <tt>:hl</tt> option (possible values are: Japanese (ja), French (fr), German (de), Italian (it), Spanish (es), Catalan (ca), Basque (eu) and Galician (gl): no values means english). Finally, you can pass <tt>:local_search => true</tt> to get the header css and js information needed for the local search control. If you do want local search you must also add <tt>:local_search => true</tt> to the @map.control_init method. If you want to load the scripts dynamically set <tt>:dynamic_load => true</tt>, and set <tt>:no_script_tag</tt> if you don't want to enclose the javascript code with a script tag.
       def self.header(options = {})
         options[:with_vml] = true unless options.has_key?(:with_vml)
         options[:hl] ||= ''
@@ -33,13 +41,36 @@ module Ym4r
         options[:sensor] = false unless options.has_key?(:sensor)
         options[:version] ||= "2.x"
         api_key = ApiKey.get(options)
-        a = "<script src=\"http://maps.google.com/maps?file=api&amp;v=#{options[:version]}&amp;key=#{api_key}&amp;hl=#{options[:hl]}&amp;sensor=#{options[:sensor]}\" type=\"text/javascript\"></script>\n"
-        a << "<script src=\"#{ActionController::Base.relative_url_root}/javascripts/ym4r-gm.js\" type=\"text/javascript\"></script>\n" unless options[:without_js]
-        a << "<!--[if IE]>\n<style type=\"text/css\">\n v\\:* { behavior:url(#default#VML);}\n</style>\n<![endif]-->\n" if options[:with_vml]
-        a << "<script src=\"http://www.google.com/uds/api?file=uds.js&amp;v=1.0\" type=\"text/javascript\"></script>" if options[:local_search]
-        a << "<script src=\"http://www.google.com/uds/solutions/localsearch/gmlocalsearch.js\" type=\"text/javascript\"></script>\n" if options[:local_search]
-        a << "<style type=\"text/css\">@import url(\"http://www.google.com/uds/css/gsearch.css\");@import url(\"http://www.google.com/uds/solutions/localsearch/gmlocalsearch.css\");}</style>" if options[:local_search]
-        a
+        ie_style = " v\\:* { behavior:url(#default#VML);}" if options[:with_vml]
+
+        code = ""
+        code << "<script type=\"text/javascript\">\n" if !options[:no_script_tag]
+        unless options[:without_js]
+          code << "var oldInitializeMap = initializeMap || function(){};\n"
+          code << "initializeMap = function() {\n"
+          code << load_js_dynamically("#{ActionController::Base.relative_url_root}/javascripts/ym4r-gm.js")
+          code << "new PeriodicalExecuter(function(pe) {\n"
+          code << "if (typeof addInfoWindowToMarker != 'undefined') {\n"
+          code << "pe.stop();\n"
+          code << "oldInitializeMap();\n"
+          code << "}\n"
+          code << "}, 0.25);\n"
+          code << "}\n"
+        end
+        code << "loadMaps = function() {\n"
+        code << "google.load('maps', '#{options[:version]}', {'callback': initializeMap, 'language': '#{options[:hl]}', 'other_params': 'sensor=#{options[:sensor]}'});\n"
+        code << "google.load('search', '1', {'language': '#{options[:hl]}'});\n" if options[:local_search]
+        code << "}\n"
+
+        if options[:dynamic_load]
+          code << load_js_dynamically("http://www.google.com/jsapi?key=#{api_key}&amp;callback=loadMaps")
+          code << "if (Prototype.Browser.IE) $$('head')[0].appendChild(new Element('style', {type: 'text/css'}).update('#{ie_style}'));\n" if ie_style
+          code << "</script>\n" if !options[:no_script_tag]
+        else
+          code << "<script src=\"http://www.google.com/jsapi?key=#{api_key}&amp;callback=loadMaps\" type=\"text/javascript\"></script>\n"
+          code << "<!--[if IE]>\n<style type=\"text/css\">\n#{ie_style}\n</style>\n<![endif]-->\n" if ie_style
+        end
+        code
       end
      
       #Outputs the <div id=...></div> which has been configured to contain the map. You can pass <tt>:width</tt> and <tt>:height</tt> as options to output this in the style attribute of the DIV element (you could also achieve the same effect by putting the dimension info into a CSS or using the instance method GMap#header_width_height). You can aslo pass <tt>:class</tt> to set the classname of the div.
@@ -251,6 +282,8 @@ module Ym4r
         no_global = options[:no_global]
         fullscreen = options[:full]
         load_pr = options[:proto_load] #to prevent some problems when the onload event callback from Prototype is used
+        dynamic_load = options[:dynamic_load]
+        no_load = true if dynamic_load
         
         html = ""
         html << "<script type=\"text/javascript\">\n" if !no_script_tag
@@ -266,6 +299,7 @@ module Ym4r
           html << "function() {\n"
         end
 
+        html << "initializeMap = function() {\n" if dynamic_load
         html << "if (GBrowserIsCompatible()) {\n" 
         
         if fullscreen
@@ -284,6 +318,10 @@ module Ym4r
         html << @init * "\n"
         html << @init_end * "\n"
         html << "\n}\n"
+        if dynamic_load
+          html << "}\n"
+          html << GMap.header(options[:header_options].merge(:dynamic_load => true, :no_script_tag => true)) if options[:header_options]
+        end
         html << "});\n" if !no_load
         html << "</script>" if !no_script_tag
         
