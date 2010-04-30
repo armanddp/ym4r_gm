@@ -46,7 +46,7 @@ module Ym4r
         code = ""
         code << "<script type=\"text/javascript\">\n" if !options[:no_script_tag]
         unless options[:without_js]
-          code << "var oldInitializeMap = initializeMap || function(){};\n"
+          code << "var oldInitializeMap = typeof initializeMap == 'undefined' ? function(){} : initializeMap;\n"
           code << "initializeMap = function() {\n"
           code << load_js_dynamically("#{ActionController::Base.relative_url_root}/javascripts/ym4r-gm.js")
           code << "new PeriodicalExecuter(function(pe) {\n"
@@ -55,18 +55,19 @@ module Ym4r
           code << "oldInitializeMap();\n"
           code << "}\n"
           code << "}, 0.25);\n"
-          code << "}\n"
+          code << "};\n"
         end
-        code << "loadMaps = function() {\n"
+        code << "var loadMaps = function() {\n"
         code << "google.load('maps', '#{options[:version]}', {'callback': initializeMap, 'language': '#{options[:hl]}', 'other_params': 'sensor=#{options[:sensor]}'});\n"
         code << "google.load('search', '1', {'language': '#{options[:hl]}'});\n" if options[:local_search]
-        code << "}\n"
+        code << "};\n"
 
         if options[:dynamic_load]
           code << load_js_dynamically("http://www.google.com/jsapi?key=#{api_key}&callback=loadMaps")
           code << "if (Prototype.Browser.IE) $$('head')[0].appendChild(new Element('style', {type: 'text/css'}).update('#{ie_style}'));\n" if ie_style
           code << "</script>\n" if !options[:no_script_tag]
         else
+          code << "</script>\n" if !options[:no_script_tag]
           code << "<script src=\"http://www.google.com/jsapi?key=#{api_key}&amp;callback=loadMaps\" type=\"text/javascript\"></script>\n"
           code << "<!--[if IE]>\n<style type=\"text/css\">\n#{ie_style}\n</style>\n<![endif]-->\n" if ie_style
         end
