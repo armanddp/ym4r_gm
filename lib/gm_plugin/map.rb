@@ -63,7 +63,7 @@ module Ym4r
         code << "}\n"
 
         if options[:dynamic_load]
-          code << load_js_dynamically("http://www.google.com/jsapi?key=#{api_key}&amp;callback=loadMaps")
+          code << load_js_dynamically("http://www.google.com/jsapi?key=#{api_key}&callback=loadMaps")
           code << "if (Prototype.Browser.IE) $$('head')[0].appendChild(new Element('style', {type: 'text/css'}).update('#{ie_style}'));\n" if ie_style
           code << "</script>\n" if !options[:no_script_tag]
         else
