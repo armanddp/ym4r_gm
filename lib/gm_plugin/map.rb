@@ -57,7 +57,7 @@ module Ym4r
           code << "}, 0.25);\n"
           code << "};\n"
         end
-        code << "var loadMaps = function() {\n"
+        code << "loadMaps = function() {\n"
         code << "google.load('maps', '#{options[:version]}', {'callback': initializeMap, 'language': '#{options[:hl]}', 'other_params': 'sensor=#{options[:sensor]}'});\n"
         code << "google.load('search', '1', {'language': '#{options[:hl]}'});\n" if options[:local_search]
         code << "};\n"
